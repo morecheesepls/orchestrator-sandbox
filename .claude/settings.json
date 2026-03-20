@@ -1,0 +1,6 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "jq -r '\"\\(.model.id // \"unknown\" | sub(\"-[0-9]{8}$\"; \"\")) | \\(.workspace.project_dir // \"\" | split(\"/\") | last)\"'"
+  }
+}
