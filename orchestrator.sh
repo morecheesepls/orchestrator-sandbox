@@ -261,11 +261,11 @@ tmux_kill() {
     tmux kill-session -t "$TMUX_SESSION" 2>/dev/null || true
 }
 
-wait_for_file_update() {
+wait_for_file() {
+    # Waits for a file to exist (it should be deleted before each session)
     local target="$1"
-    local marker="$2"
     while true; do
-        if [[ -f "$target" && "$target" -nt "$marker" ]]; then
+        if [[ -f "$target" ]]; then
             return 0
         fi
         sleep "$POLL_INTERVAL"
@@ -292,9 +292,8 @@ run_loop() {
 
         log_msg INFO "--- Iteration $ITERATION: $role ($reason) ---"
 
-        # --- Record session start for failure detection ---
-        local marker="$LOG_DIR/session_start"
-        touch "$marker"
+        # --- Delete checkpoint_status so we can detect a fresh write ---
+        rm -f "$PROJECT_DIR/checkpoint_status"
 
         # --- Launch the role ---
         if [[ "$MODE" == "interactive" ]]; then
@@ -303,7 +302,7 @@ run_loop() {
                 sleep 2
             fi
             tmux_send "/$role"
-            wait_for_file_update "$PROJECT_DIR/checkpoint_status" "$marker"
+            wait_for_file "$PROJECT_DIR/checkpoint_status"
             sleep 2
         else
             claude -p "/$role" < /dev/null > /dev/null 2>&1 || true
@@ -311,7 +310,7 @@ run_loop() {
 
         # --- Check if /endsession ran ---
         local status_file="$PROJECT_DIR/checkpoint_status"
-        if [[ -f "$status_file" && "$status_file" -nt "$marker" ]]; then
+        if [[ -f "$status_file" ]]; then
             CONSECUTIVE_FAILURES=0
             local checkpoint
             checkpoint=$(tr -d '[:space:]' < "$status_file" | tr '[:upper:]' '[:lower:]')
