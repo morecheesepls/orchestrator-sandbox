@@ -48,6 +48,8 @@ load_config() {
                 mode)           MODE="$val" ;;
             esac
         done < "$CONFIG_FILE"
+    else
+        save_config
     fi
 }
 
