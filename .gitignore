@@ -1,1 +1,6 @@
 .orchestrator/
+current_role
+next_role
+checkpoint_status
+test_pass_count
+.codex/
